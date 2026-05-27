@@ -1,0 +1,272 @@
+basePath: /
+definitions:
+  model.CreateRequest:
+    properties:
+      end_date:
+        example: 12-2025
+        type: string
+      price:
+        example: 400
+        type: integer
+      service_name:
+        example: Yandex Plus
+        maxLength: 255
+        minLength: 1
+        type: string
+      start_date:
+        example: 07-2025
+        type: string
+      user_id:
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+    required:
+    - price
+    - service_name
+    - start_date
+    - user_id
+    type: object
+  model.ErrorResponse:
+    properties:
+      error:
+        example: подписка не найдена
+        type: string
+    type: object
+  model.SubscriptionResponse:
+    properties:
+      end_date:
+        example: 12-2025
+        type: string
+      id:
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+      price:
+        example: 400
+        type: integer
+      service_name:
+        example: Yandex Plus
+        type: string
+      start_date:
+        example: 07-2025
+        type: string
+      user_id:
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+    type: object
+  model.TotalCostResponse:
+    properties:
+      period_end:
+        example: 12-2025
+        type: string
+      period_start:
+        example: 01-2025
+        type: string
+      service_name:
+        example: Yandex Plus
+        type: string
+      subscriptions_count:
+        example: 2
+        type: integer
+      total_cost:
+        example: 4800
+        type: integer
+      user_id:
+        example: 60601fee-2bf1-4721-ae6f-7636e79a0cba
+        type: string
+    type: object
+  model.UpdateRequest:
+    properties:
+      end_date:
+        example: 12-2025
+        type: string
+      price:
+        example: 599
+        type: integer
+      service_name:
+        example: Netflix
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API управления подписками пользователей
+  title: Subscription Service
+  version: "1.0"
+paths:
+  /api/v1/subscriptions:
+    get:
+      parameters:
+      - description: UUID пользователя
+        in: query
+        name: user_id
+        type: string
+      - description: Название сервиса (подстрока)
+        in: query
+        name: service_name
+        type: string
+      - default: 100
+        description: Лимит (макс 1000)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SubscriptionResponse'
+            type: array
+      summary: Список подписок
+      tags:
+      - subscriptions
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные подписки
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Создать подписку
+      tags:
+      - subscriptions
+  /api/v1/subscriptions/{id}:
+    delete:
+      parameters:
+      - description: UUID подписки
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Удалить подписку
+      tags:
+      - subscriptions
+    get:
+      parameters:
+      - description: UUID подписки
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SubscriptionResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Получить подписку по ID
+      tags:
+      - subscriptions
+    put:
+      consumes:
+      - application/json
+      description: 'Все поля опциональны. end_date: null — убрать дату; "MM-YYYY"
+        — установить новую.'
+      parameters:
+      - description: UUID подписки
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные для обновления
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SubscriptionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Обновить подписку
+      tags:
+      - subscriptions
+  /api/v1/subscriptions/total-cost:
+    get:
+      description: 'Для каждой подходящей подписки: price × кол-во месяцев в периоде'
+      parameters:
+      - description: Начало периода MM-YYYY
+        example: 01-2025
+        in: query
+        name: period_start
+        required: true
+        type: string
+      - description: Конец периода MM-YYYY
+        example: 12-2025
+        in: query
+        name: period_end
+        required: true
+        type: string
+      - description: UUID пользователя
+        in: query
+        name: user_id
+        type: string
+      - description: Название сервиса
+        in: query
+        name: service_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TotalCostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Суммарная стоимость подписок за период
+      tags:
+      - analytics
+swagger: "2.0"
