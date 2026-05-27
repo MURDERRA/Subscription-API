@@ -1,9 +1,3 @@
-// @title           Subscription Service
-// @version         1.0
-// @description     API управления подписками пользователей
-// @host            localhost:8000
-// @BasePath        /
-
 package main
 
 import (
@@ -16,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	_ "subscription-service/docs" // сгенерировано: swag init -g main.go -o docs
+	_ "subscription-service/docs" // swag init -g main.go -o docs
 
 	"subscription-service/internal/config"
 	"subscription-service/internal/db"
@@ -25,6 +19,12 @@ import (
 	"subscription-service/internal/repository"
 	"subscription-service/internal/service"
 )
+
+// @title           Subscription Service
+// @version         1.0
+// @description     API управления подписками пользователей
+// @host            localhost:8000
+// @BasePath        /
 
 func main() {
 	cfg := config.Load()

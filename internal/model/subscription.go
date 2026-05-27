@@ -49,8 +49,10 @@ type CreateRequest struct {
 	EndDate     *string   `json:"end_date"                                      example:"12-2025"`
 }
 
-// UpdateRequest — все поля опциональны.
-// EndDate: отсутствие = не менять; null = убрать дату; "MM-YYYY" = новое значение.
+// UpdateRequest — все поля опциональны
+// EndDate: отсутствие = не менять
+// null = убрать дату
+// "MM-YYYY" = новое значение
 type UpdateRequest struct {
 	ServiceName *string         `json:"service_name"                    example:"Netflix"`
 	Price       *int            `json:"price"                           example:"599"`

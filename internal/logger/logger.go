@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-// New создаёт JSON-логгер, пишущий одновременно в stdout и файл logDir/app.log.
 func New(level, logDir string) *slog.Logger {
 	if err := os.MkdirAll(logDir, 0o755); err != nil {
 		slog.Error("не удалось создать папку логов", "err", err)

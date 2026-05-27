@@ -26,7 +26,7 @@ type UpdateParams struct {
 	ID          uuid.UUID
 	ServiceName *string
 	Price       *int
-	EndDateSet  bool   // true — поле end_date присутствовало в теле запроса
+	EndDateSet  bool // true — значит поле end_date присутствовало в теле запроса
 	EndDate     *time.Time
 }
 
@@ -153,7 +153,7 @@ func (r *Repo) Update(ctx context.Context, p UpdateParams) (*model.Subscription,
 		}
 	}
 
-	// Если нечего обновлять — просто вернём текущую запись
+	// Если нечего обновлять — возвращаемс текущую запись
 	if len(sets) == 0 {
 		return r.GetByID(ctx, p.ID)
 	}
@@ -192,7 +192,7 @@ func (r *Repo) TotalCost(ctx context.Context, p TotalCostParams) (totalCost int6
 		where += fmt.Sprintf(" AND service_name ILIKE $%d", len(args))
 	}
 
-	// AGE(later, earlier) возвращает interval; из него берём полные года и месяцы.
+	// AGE(later, earlier) возвращает interval, из него берём полные года и месяцы
 	q := fmt.Sprintf(`
 		SELECT
 			COALESCE(SUM(
