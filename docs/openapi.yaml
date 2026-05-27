@@ -1,0 +1,303 @@
+openapi: "3.0.3"
+
+info:
+  title: Subscription Service
+  version: "1.0.0"
+  description: API управления подписками пользователей
+
+servers:
+  - url: http://localhost:8000
+    description: Локальная разработка
+
+tags:
+  - name: subscriptions
+    description: CRUD операции над подписками
+  - name: analytics
+    description: Аналитика по подпискам
+
+paths:
+
+  /api/v1/subscriptions:
+    post:
+      tags: [subscriptions]
+      summary: Создать подписку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequest"
+            example:
+              service_name: "Yandex Plus"
+              price: 400
+              user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+              start_date: "07-2025"
+      responses:
+        "201":
+          description: Подписка создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    get:
+      tags: [subscriptions]
+      summary: Список подписок
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по пользователю
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Фильтр по названию (регистронезависимый поиск подстроки)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: Список подписок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+
+  /api/v1/subscriptions/total-cost:
+    get:
+      tags: [analytics]
+      summary: Суммарная стоимость подписок за период
+      description: |
+        Возвращает суммарную стоимость в рублях.
+        Для каждой подходящей подписки: `price × количество_месяцев_в_периоде`.
+      parameters:
+        - name: period_start
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          example: "01-2025"
+        - name: period_end
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          example: "12-2025"
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: service_name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Результат подсчёта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotalCostResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/subscriptions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [subscriptions]
+      summary: Получить подписку по ID
+      responses:
+        "200":
+          description: Подписка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [subscriptions]
+      summary: Обновить подписку
+      description: |
+        Все поля опциональны. Поле `end_date`:
+        - отсутствует → не изменяется
+        - `null` → дата окончания убирается
+        - `"MM-YYYY"` → устанавливается новая дата
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRequest"
+      responses:
+        "200":
+          description: Обновлённая подписка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [subscriptions]
+      summary: Удалить подписку
+      responses:
+        "204":
+          description: Удалено
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  schemas:
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_name:
+          type: string
+          example: "Yandex Plus"
+        price:
+          type: integer
+          example: 400
+        user_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          example: "07-2025"
+        end_date:
+          type: string
+          pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          nullable: true
+          example: "12-2025"
+
+    CreateRequest:
+      type: object
+      required: [service_name, price, user_id, start_date]
+      properties:
+        service_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Yandex Plus"
+        price:
+          type: integer
+          minimum: 1
+          example: 400
+          description: Стоимость в рублях, без копеек
+        user_id:
+          type: string
+          format: uuid
+          example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+        start_date:
+          type: string
+          pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          example: "07-2025"
+        end_date:
+          type: string
+          pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          nullable: true
+          example: "12-2025"
+
+    UpdateRequest:
+      type: object
+      properties:
+        service_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        price:
+          type: integer
+          minimum: 1
+        end_date:
+          type: string
+          pattern: "^(0[1-9]|1[0-2])-\\d{4}$"
+          nullable: true
+
+    TotalCostResponse:
+      type: object
+      properties:
+        total_cost:
+          type: integer
+          description: Суммарная стоимость в рублях
+          example: 4800
+        period_start:
+          type: string
+          example: "01-2025"
+        period_end:
+          type: string
+          example: "12-2025"
+        subscriptions_count:
+          type: integer
+          example: 3
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        service_name:
+          type: string
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnprocessableEntity:
+      description: Ошибка валидации бизнес-логики
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
